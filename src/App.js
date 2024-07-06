@@ -3,7 +3,6 @@ import './App.css';
 
 const rows = 15;
 const cols = 20;
-console.log(rows,cols)
 
 function getRandomColor() {
   const r = Math.floor(Math.random() * 256);
