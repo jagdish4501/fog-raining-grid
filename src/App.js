@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-const rows = 15;
-const cols = 20;
+const rows = 25;
+const cols = 30;
 
 function getRandomColor() {
   const r = Math.floor(Math.random() * 256);
@@ -13,61 +13,81 @@ function getRandomColor() {
 
 function App() {
   const [grid, setGrid] = useState(Array.from({ length: rows }, () => Array(cols).fill(0)));
+  const [clicked, setClicked] = useState([]);
   const [color, setColor] = useState(getRandomColor());
 
+  const fun = (i, j) => {
+    setClicked(prev => [...prev, [i, j, 0]]);
+    setColor(getRandomColor());
+  };
+
   useEffect(() => {
+    const dir = [[-1, -1], [-1, 1], [1, 1], [1, -1]];
     const interval = setInterval(() => {
       setGrid(oldGrid => {
         const newGrid = oldGrid.map(row => [...row]);
 
-        // Move rain downwards
-        for (let i = rows - 1; i >= 0; i--) {
-          for (let j = 0; j < cols; j++) {
-            if (newGrid[i][j] > 0) {
-              if (i < rows - 1) {
-                newGrid[i + 1][j] = newGrid[i][j];
-              }
-              if (newGrid[i][j] < 7)
-                newGrid[i][j] = newGrid[i][j] + 1;
-              else newGrid[i][j] = 0;
+        for (let [i, j, rad] of clicked) {
+          // moving in column 0->1
+          for (let c = j + rad * dir[0][1]; c <= j + rad * dir[1][1]; c++) {
+            if (c < cols && c >= 0 && i + rad * dir[0][0] >= 0 && i + rad * dir[0][0] < rows) {
+              newGrid[i + rad * dir[0][0]][c] = 1;
+            }
+          }
+          // moving in column 3->2
+          for (let c = j + rad * dir[3][1]; c <= j + rad * dir[2][1]; c++) {
+            if (c < cols && c >= 0 && i + rad * dir[2][0] >= 0 && i + rad * dir[2][0] < rows) {
+              newGrid[i + rad * dir[2][0]][c] = 1;
+            }
+          }
+          // moving in row 0->3
+          for (let r = i + rad * dir[0][0]; r <= i + rad * dir[3][0]; r++) {
+            if (r >= 0 && r < rows && j + rad * dir[0][1] < cols && j + rad * dir[0][1] >= 0) {
+              newGrid[r][j + rad * dir[0][1]] = 1;
+            }
+          }
+          // moving in row 1->2
+          for (let r = i + rad * dir[1][0]; r <= i + rad * dir[2][0]; r++) {
+            if (r >= 0 && r < rows && j + rad * dir[1][1] < cols && j + rad * dir[1][1] >= 0) {
+              newGrid[r][j + rad * dir[1][1]] = 1;
             }
           }
         }
 
-        // Add new rain drops
-        for (let j = 0; j < cols; j++) {
-          if (Math.random() < 0.01) {
-            if (newGrid[0][j] === 0) {
-              newGrid[0][j] = 1;
+        //clearing if radius become more than grid size
+        setClicked(prevClicked => prevClicked.filter(([x, y, rad]) => rad <= cols).map(([x, y, rad]) => [x, y, rad + 1]));
+
+
+        for (let i = 0; i < rows; i++) {
+          for (let j = 0; j < cols; j++) {
+            if (oldGrid[i][j] === 1) {
+              newGrid[i][j] = 0;
             }
           }
         }
+
         return newGrid;
       });
     }, 50);
-
-    const colorInterval = setInterval(() => {
-      setColor(getRandomColor());
-    }, 2000);
-
     return () => {
       clearInterval(interval);
-      clearInterval(colorInterval);
     };
-  }, []);
+  }, [clicked]);
 
   return (
     <div className="grid">
       {grid.map((row, rowIndex) =>
         row.map((cell, colIndex) => (
           <div
+            onClick={() => fun(rowIndex, colIndex)}
             key={`${rowIndex}-${colIndex}`}
             style={{
-				    width:'25px',
-				    height:'25px',
-				    backgroundColor: cell > 0 ? `rgba(${color.slice(4, -1)}, ${(8-cell)/(7)})` : 'black'
-				 }}
-          />
+              width: '25px',
+              height: '25px',
+              backgroundColor: cell > 0 ? color : 'black'
+            }}
+          >
+          </div>
         ))
       )}
     </div>
