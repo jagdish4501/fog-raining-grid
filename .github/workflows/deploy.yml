@@ -9,36 +9,10 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-      - name: Install dependencies
-        run: npm ci
-      - name: Build React app
-        run: npm run build
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: ./build
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: ./build
-
       - name: Add SSH Key
         run: |
           # Create the .ssh directory
@@ -48,19 +22,7 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
 
-      - name: Copy files to EC2
-        env:
-          EC2_HOST: ${{ secrets.EC2_HOST }}
-          EC2_USER: ${{ secrets.EC2_USER }}
-        uses: appleboy/scp-action@v0.1.2
-        with:
-          host: ${{ env.EC2_HOST }}
-          username: ${{ env.EC2_USER }}
-          key_path: ~/.ssh/id_rsa # Use the saved key file path
-          source: "./build/*"
-          target: "~/app/build" # Path on EC2 instance to store build files
-
-      - name: Install Serve and Start Application
+      - name: Test SSH Connection and Create File
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USER: ${{ secrets.EC2_USER }}
@@ -70,16 +32,8 @@ jobs:
           username: ${{ env.EC2_USER }}
           key_path: ~/.ssh/id_rsa # Use the saved key file path
           script: |
-            # Navigate to the app directory
-            cd ~/app
+            # Navigate to the home directory
+            cd ~
 
-            # Install the serve package globally if not already installed
-            if ! command -v serve &> /dev/null; then
-              npm install -g serve
-            fi
-
-            # Terminate any existing 'serve' instances on port 3000
-            pkill -f "serve -s build" || true
-
-            # Start the application using serve on port 3000 in the background
-            nohup serve -s build -l 3000 &
+            # Create a text file to confirm successful SSH connection
+            echo "This file was created by a GitHub Action" > created_from_github_action.txt
