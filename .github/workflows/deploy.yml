@@ -41,6 +41,9 @@ jobs:
 
       - name: Add SSH Key
         run: |
+          # Create the .ssh directory
+          mkdir -p ~/.ssh
+
           # Save the EC2_KEY into a file and set correct permissions
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 400 ~/.ssh/id_rsa
