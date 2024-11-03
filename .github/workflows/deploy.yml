@@ -11,11 +11,10 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    needs: build
     steps:
       - name: Add SSH Key
         run: |
-          # Create the .ssh directory
+          # Create the .ssh directory if it doesn't exist
           mkdir -p ~/.ssh
 
           # Save the EC2_KEY into a file and set correct permissions
