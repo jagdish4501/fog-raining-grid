@@ -3,7 +3,7 @@ name: Create File on EC2
 on:
   push:
     branches:
-      - main # Change this to your branch name if necessary
+      - main # Change if necessary
 
 jobs:
   create-file:
@@ -13,11 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Start SSH agent
+      - name: Start SSH agent and add key
         run: |
           eval "$(ssh-agent -s)"
           echo "${{ secrets.EC2_KEY }}" | tr -d '\r' | ssh-add -
+          ssh-add -l  # List keys added to verify
 
       - name: Create file on EC2
+        env:
+          SSH_USER: ubuntu # Adjust if 'ec2-user' or other is needed
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.234.77.56 "echo 'This file was created from GitHub Action' > created_from_githubaction.txt"
+          ssh -o StrictHostKeyChecking=no $SSH_USER@13.234.77.56 "echo 'This file was created from GitHub Action' > created_from_githubaction.txt"
