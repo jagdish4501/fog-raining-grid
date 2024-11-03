@@ -13,14 +13,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Start SSH agent and add key
+      - name: Set up SSH key
         run: |
-          eval "$(ssh-agent -s)"
-          echo "${{ secrets.EC2_KEY }}" | tr -d '\r' | ssh-add -
-          ssh-add -l  # List keys added to verify
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
       - name: Create file on EC2
         env:
-          SSH_USER: ubuntu # Adjust if 'ec2-user' or other is needed
+          SSH_USER: ubuntu # Use `ec2-user` if necessary
         run: |
           ssh -o StrictHostKeyChecking=no $SSH_USER@13.234.77.56 "echo 'This file was created from GitHub Action' > created_from_githubaction.txt"
